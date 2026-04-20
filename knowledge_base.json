@@ -1,0 +1,130 @@
+[
+  {
+    "policy_id": "POL-001",
+    "category": "returns",
+    "title": "Standard Return Window",
+    "content": "Most products have a 30-day return window from the date of delivery. Items must be unused, in original condition, and in original packaging. Proof of purchase (order ID) is required for all returns.",
+    "keywords": ["return", "send back", "30 days", "original packaging", "unused", "return window", "policy"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-002",
+    "category": "returns",
+    "title": "Category-Specific Return Windows",
+    "content": "Electronics accessories (laptop stands, cables, mounts): 60-day return window. High-value electronics (smart watches, tablets, laptops): 15-day return window only. Footwear: 30-day return window, must be unworn with no outdoor use. Sports and fitness equipment: 30-day return window, non-returnable if used (hygiene policy).",
+    "keywords": ["electronics", "laptop", "smartwatch", "tablet", "footwear", "sports", "fitness", "accessories", "cables", "return window", "15 days", "60 days"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-003",
+    "category": "returns",
+    "title": "Non-Returnable Items",
+    "content": "Non-returnable items include: items registered online after purchase (e.g. Bluetooth devices, smart devices with activation), perishable goods, downloadable software or digital content, and items marked as Final Sale at time of purchase.",
+    "keywords": ["non-returnable", "final sale", "registered", "bluetooth", "activated", "digital", "software", "perishable", "no return"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-004",
+    "category": "returns",
+    "title": "Damaged or Defective on Arrival",
+    "content": "If an item arrives damaged or defective, the customer is eligible for a full refund or replacement regardless of return window. Photo evidence is required to process the claim. The customer is not required to return the damaged item in most cases — agent should use judgment.",
+    "keywords": ["damaged", "defective", "broken", "arrived damaged", "DOA", "on arrival", "photo", "evidence", "full refund", "replacement", "regardless of window"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-005",
+    "category": "returns",
+    "title": "Wrong Item Delivered",
+    "content": "If the wrong item is delivered, ShopWave will arrange return pickup and ship the correct item at no cost. If the correct item is out of stock, a full refund is issued. This does not count against the standard return window.",
+    "keywords": ["wrong item", "incorrect product", "wrong color", "wrong size", "wrong model", "received wrong", "not what I ordered", "pickup", "correct item"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-006",
+    "category": "refunds",
+    "title": "Refund Eligibility and Processing",
+    "content": "Refunds are only issued after eligibility is confirmed. Refunds are processed to the original payment method. Standard processing time: 5 to 7 business days after approval. Refunds cannot be reversed once issued.",
+    "keywords": ["refund", "money back", "processing time", "5 days", "7 days", "business days", "original payment", "approved", "eligible"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-007",
+    "category": "refunds",
+    "title": "Partial Refunds and Restocking Fee",
+    "content": "Partial refunds may be issued for items returned in non-original condition. A restocking fee of 10% may apply to high-value electronics returned outside of 7 days.",
+    "keywords": ["partial refund", "restocking fee", "10%", "non-original", "used condition", "high-value electronics"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-008",
+    "category": "refunds",
+    "title": "Refund Exceptions by Customer Tier",
+    "content": "Standard tier: Standard return and refund policy applies, no exceptions. Premium tier: Agents may use judgment to approve borderline cases (e.g. 1 to 3 days outside return window), requires supervisor note. VIP tier: Extended leniency, management pre-approvals may be on file, always check customer notes before declining.",
+    "keywords": ["tier", "premium", "vip", "standard", "exception", "borderline", "supervisor", "leniency", "pre-approval", "judgment"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-009",
+    "category": "warranty",
+    "title": "Warranty Coverage",
+    "content": "Warranty covers manufacturing defects only. Does not cover: physical damage caused by user, water damage, or unauthorised modifications.",
+    "keywords": ["warranty", "manufacturing defect", "defective", "not working", "broken", "malfunction", "water damage", "physical damage", "modification"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-010",
+    "category": "warranty",
+    "title": "Warranty Periods by Category",
+    "content": "Electronics (headphones, speakers, smart watches): 12 months from delivery date. Home appliances (coffee makers, kitchen devices): 24 months from delivery date. Electronics accessories: 6 months from delivery date. Footwear and sports products: No warranty, covered only by return policy.",
+    "keywords": ["warranty period", "12 months", "24 months", "6 months", "headphones", "speakers", "smartwatch", "appliances", "coffee maker", "accessories"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-011",
+    "category": "warranty",
+    "title": "Warranty Claim Process",
+    "content": "Customer must provide order ID and description of defect. Agent should verify warranty period using order delivery date and product warranty duration. Warranty claims are escalated to the warranty team — agents do not resolve warranty claims directly. Resolution options: repair, replacement, or refund at ShopWave's discretion.",
+    "keywords": ["warranty claim", "defect", "escalate warranty", "warranty team", "repair", "replacement", "verify warranty"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-012",
+    "category": "cancellation",
+    "title": "Order Cancellation Policy",
+    "content": "Orders in processing status can be cancelled free of charge at any time before shipment. Orders in shipped status cannot be cancelled — customer must wait for delivery and initiate a return. Orders in delivered status cannot be cancelled. Cancellations are confirmed via email within 1 hour.",
+    "keywords": ["cancel", "cancellation", "stop order", "don't want", "change mind", "processing", "shipped", "before shipment"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-013",
+    "category": "exchange",
+    "title": "Exchange Policy",
+    "content": "Exchanges are available for wrong size, wrong colour, or wrong item delivered. Exchange requests are fulfilled subject to stock availability. If the desired item is unavailable, a full refund is offered instead. Exchanges do not extend the original return window.",
+    "keywords": ["exchange", "swap", "wrong size", "wrong colour", "wrong color", "replace item", "stock", "availability"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-014",
+    "category": "escalation",
+    "title": "Escalation Guidelines",
+    "content": "Escalate a ticket to a human agent when: the issue involves a warranty claim (all warranty claims go to warranty team), the customer is requesting a replacement (not a refund) for a damaged item, there is conflicting data between customer claims and system records, the refund amount exceeds $200, there are signs of fraud or social engineering, the resolution requires supervisor approval (borderline premium case), or the agent confidence score is below 0.6. When escalating always include: a concise summary of the issue, what the agent attempted or verified, the recommended resolution path, and the priority level.",
+    "keywords": ["escalate", "human", "manager", "supervisor", "warranty claim", "fraud", "conflicting", "confidence", "over 200", "$200", "replacement damaged"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-015",
+    "category": "customer_tiers",
+    "title": "Customer Tier Verification and Privileges",
+    "content": "Customer tier is verified via system only. Customers cannot self-declare their tier. Standard: standard policy, no exceptions. Premium: priority queue, agents can apply judgment for borderline cases. VIP: highest leniency, check customer notes for pre-approvals, dedicated support. Any ticket where a customer claims a tier not verified in system should be flagged as potential fraud.",
+    "keywords": ["tier", "vip", "premium", "standard", "loyalty", "privileges", "verify", "self-declare", "flag", "priority queue", "dedicated support"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  },
+  {
+    "policy_id": "POL-016",
+    "category": "communication",
+    "title": "Tone and Communication Guidelines",
+    "content": "Always address the customer by their first name. Be empathetic and professional, never dismissive. If declining a request, always explain the reason clearly and offer an alternative where possible. Avoid jargon. Write in plain, clear language. For escalations, keep the customer informed that their case is being reviewed by a specialist.",
+    "keywords": ["tone", "communication", "empathetic", "professional", "first name", "decline", "alternative", "plain language"],
+    "applies_to_tiers": ["standard", "premium", "vip"]
+  }
+]

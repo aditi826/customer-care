@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>NEXUS — ShopWave Support Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0b0d;--surface:#111318;--surface2:#191c23;--surface3:#1e222b;
+  --border:#252932;--border-hi:#353c4a;
+  --accent:#00e5a0;--accent2:#0af;--warn:#f5a623;--danger:#ff4757;
+  --muted:#4a5265;--text:#d4dce8;--text-lo:#6b7a8f;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:.6}
+
+.app{position:relative;z-index:1;display:grid;grid-template-rows:auto auto 1fr;min-height:100vh}
+
+/* ── Header ── */
+header{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;
+  border-bottom:1px solid var(--border);background:rgba(10,11,13,.96);
+  backdrop-filter:blur(8px);position:sticky;top:0;z-index:200}
+.logo{font-family:var(--sans);font-size:17px;font-weight:800;letter-spacing:.08em;color:var(--accent);display:flex;align-items:center;gap:10px}
+.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.header-meta{display:flex;align-items:center;gap:16px}
+.stat-pill{padding:4px 10px;border:1px solid var(--border-hi);border-radius:3px;font-size:10px;color:var(--text-lo);letter-spacing:.06em}
+.stat-pill span{color:var(--accent);font-weight:600}
+
+/* ── Config bar ── */
+.config-bar{padding:8px 20px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.config-label{font-size:10px;color:var(--text-lo);letter-spacing:.08em;white-space:nowrap}
+.config-input{flex:1;min-width:160px;max-width:220px;background:var(--bg);border:1px solid var(--border-hi);
+  color:var(--text);padding:4px 9px;font-family:var(--mono);font-size:11px;border-radius:3px;outline:none;transition:border-color .15s}
+.config-input:focus{border-color:var(--accent)}
+.config-sep{width:1px;height:18px;background:var(--border)}
+
+/* ── Layout ── */
+.main{display:grid;grid-template-columns:320px 1fr 360px;gap:0;height:calc(100vh - 100px);overflow:hidden}
+.panel{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel:last-child{border-right:none}
+.panel-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.panel-title{font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-lo)}
+.panel-body{flex:1;overflow-y:auto;padding:10px}
+.panel-body::-webkit-scrollbar{width:3px}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:2px}
+
+/* ── Ticket cards ── */
+.ticket-card{padding:12px;border:1px solid var(--border);border-radius:4px;margin-bottom:7px;cursor:pointer;
+  transition:border-color .15s,background .15s;position:relative;overflow:hidden}
+.ticket-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--muted);transition:background .15s}
+.ticket-card:hover{border-color:var(--border-hi);background:var(--surface)}
+.ticket-card.selected{border-color:var(--accent);background:rgba(0,229,160,.04)}
+.ticket-card.selected::before,.ticket-card.p-high::before{background:var(--danger)}
+.ticket-card.p-medium::before{background:var(--warn)}
+.ticket-card.p-low::before{background:var(--accent2)}
+.ticket-card.selected.p-high::before{box-shadow:0 0 8px var(--danger)}
+.ticket-card.selected.p-medium::before{box-shadow:0 0 8px var(--warn)}
+.ticket-card.selected.p-low::before{box-shadow:0 0 8px var(--accent2)}
+.ticket-id{font-size:10px;color:var(--text-lo);letter-spacing:.08em;margin-bottom:4px}
+.ticket-subject{font-size:12px;color:var(--text);line-height:1.5;margin-bottom:7px;font-weight:500}
+.ticket-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+
+/* ── Badges ── */
+.badge{padding:2px 7px;border-radius:2px;font-size:10px;letter-spacing:.06em;font-weight:600;text-transform:uppercase}
+.badge-open    {background:rgba(10,170,255,.12);color:var(--accent2);border:1px solid rgba(10,170,255,.25)}
+.badge-resolved{background:rgba(0,229,160,.12);color:var(--accent);border:1px solid rgba(0,229,160,.25)}
+.badge-escalated{background:rgba(255,71,87,.12);color:var(--danger);border:1px solid rgba(255,71,87,.25)}
+.badge-high   {background:rgba(255,71,87,.1);color:var(--danger);border:1px solid rgba(255,71,87,.2)}
+.badge-medium {background:rgba(245,166,35,.1);color:var(--warn);border:1px solid rgba(245,166,35,.2)}
+.badge-low    {background:rgba(10,170,255,.1);color:var(--accent2);border:1px solid rgba(10,170,255,.2)}
+
+/* ── Buttons ── */
+.btn{cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.08em;font-weight:600;
+  text-transform:uppercase;border-radius:3px;transition:opacity .15s,transform .1s;border:none;display:inline-flex;align-items:center;gap:7px}
+.btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important}
+.btn-primary{background:var(--accent);color:#000;padding:9px 18px}
+.btn-primary:hover:not(:disabled){opacity:.85;transform:translateY(-1px)}
+.btn-email{background:#1a4fff22;color:#5b9aff;border:1px solid #1a4fff55;padding:8px 16px}
+.btn-email:hover:not(:disabled){background:#1a4fff33;border-color:#5b9aff;transform:translateY(-1px)}
+.btn-email.active{background:#1a4fff44;border-color:#5b9aff;box-shadow:0 0 12px #1a4fff44}
+.btn-send{background:#00e5a022;color:var(--accent);border:1px solid #00e5a044;padding:9px 20px}
+.btn-send:hover:not(:disabled){background:#00e5a033;border-color:var(--accent);transform:translateY(-1px)}
+.btn-outline{background:transparent;color:var(--text-lo);border:1px solid var(--border-hi);padding:5px 10px}
+.btn-outline:hover{color:var(--text);border-color:var(--accent)}
+.btn-danger-outline{background:transparent;color:var(--danger);border:1px solid rgba(255,71,87,.3);padding:5px 10px}
+.btn-danger-outline:hover{background:rgba(255,71,87,.08);border-color:var(--danger)}
+
+/* ── Spinner ── */
+.spinner{width:13px;height:13px;border:2px solid rgba(0,229,160,.2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.spinner-blue{border:2px solid rgba(91,154,255,.2);border-top-color:#5b9aff}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Detail sections ── */
+.detail-section{margin-bottom:14px;padding:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface)}
+.section-label{font-size:10px;color:var(--text-lo);letter-spacing:.12em;text-transform:uppercase;margin-bottom:9px;font-weight:600;
+  display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kv-label{font-size:10px;color:var(--text-lo);margin-bottom:2px}
+.kv-value{font-size:12px;color:var(--text);font-weight:500}
+
+/* ── Confidence block ── */
+.confidence-block{padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:4px;margin-bottom:10px}
+.confidence-label{display:flex;justify-content:space-between;margin-bottom:9px}
+.confidence-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-lo)}
+.confidence-pct{font-size:22px;font-weight:700;font-family:var(--sans)}
+.confidence-pct.high{color:var(--accent)}.confidence-pct.medium{color:var(--warn)}.confidence-pct.low{color:var(--danger)}
+.meter-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.meter-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.meter-fill.high{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.meter-fill.medium{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.meter-fill.low{background:var(--danger);box-shadow:0 0 8px var(--danger)}
+
+/* ── Decision banner ── */
+.decision-banner{padding:12px;border-radius:4px;margin-bottom:10px;display:flex;align-items:flex-start;gap:10px;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.decision-banner.resolved{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25)}
+.decision-banner.escalated{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.25)}
+.banner-icon{font-size:17px;flex-shrink:0}
+.banner-title{font-size:12px;font-weight:700;letter-spacing:.06em;margin-bottom:3px}
+.banner-desc{font-size:11px;color:var(--text-lo);line-height:1.6}
+.decision-banner.resolved .banner-title{color:var(--accent)}
+.decision-banner.escalated .banner-title{color:var(--danger)}
+
+/* ── Pipeline steps ── */
+.pipeline-step{display:flex;gap:10px;margin-bottom:4px;padding:9px 11px;border:1px solid var(--border);
+  border-radius:3px;background:var(--surface);animation:slideIn .25s ease both;cursor:pointer;transition:border-color .15s}
+.pipeline-step:hover{border-color:var(--border-hi)}
+.step-icon{width:18px;text-align:center;flex-shrink:0;margin-top:1px}
+.step-name{font-size:10px;font-weight:600;color:var(--text);letter-spacing:.05em}
+.step-detail{font-size:10px;color:var(--text-lo);margin-top:2px;line-height:1.5}
+
+/* ── Log entries ── */
+.log-entry{padding:5px 9px;margin-bottom:3px;border-left:2px solid var(--border);border-radius:0 3px 3px 0;font-size:10px;line-height:1.7;animation:slideIn .2s ease both}
+.log-entry.TICKET_RECEIVED{border-color:var(--accent2)}.log-entry.AGENT_STEP{border-color:var(--muted)}
+.log-entry.LLM_CALL{border-color:#7c6cff}.log-entry.CLASSIFICATION{border-color:var(--accent)}
+.log-entry.KB_SEARCH{border-color:#e0e04a}.log-entry.DECISION{border-color:var(--warn)}
+.log-entry.EMAIL_SENT{border-color:var(--accent2)}.log-entry.ESCALATION{border-color:var(--danger)}
+.log-entry.RESOLUTION{border-color:var(--accent)}.log-entry.ERROR{border-color:var(--danger)}
+.log-time{color:var(--muted);margin-right:7px}
+.log-event{font-weight:600;letter-spacing:.06em;margin-right:5px}
+.log-entry.ESCALATION .log-event{color:var(--danger)}.log-entry.RESOLUTION .log-event{color:var(--accent)}
+.log-entry.LLM_CALL .log-event{color:#9b8cff}.log-entry.EMAIL_SENT .log-event{color:var(--accent2)}
+.log-entry.DECISION .log-event{color:var(--warn)}.log-msg{color:var(--text-lo)}
+
+/* ── Reasoning ── */
+.reasoning-step{display:flex;gap:9px;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px}
+.reasoning-step:last-child{border-bottom:none}
+.reasoning-num{color:var(--accent);font-weight:700;flex-shrink:0;width:18px}
+.reasoning-text{color:var(--text-lo);line-height:1.6}
+.policy-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.policy-tag{padding:2px 8px;font-size:10px;border:1px solid #2d3545;border-radius:2px;color:var(--text-lo);background:var(--surface2)}
+
+/* ── Summary ── */
+.summary-box{padding:11px;background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.15);border-radius:4px;
+  font-size:11px;color:var(--text-lo);line-height:1.8;margin-bottom:10px}
+
+/* ── Action bar ── */
+.action-bar{padding:10px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--surface)}
+
+/* ── Ticket description ── */
+.ticket-desc{font-size:11px;color:var(--text-lo);line-height:1.8;padding:10px;background:var(--surface2);border-radius:3px;border:1px solid var(--border);margin-bottom:10px}
+
+.detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;color:var(--muted)}
+.detail-empty .icon{font-size:44px;opacity:.25}
+.detail-empty p{font-size:11px;letter-spacing:.08em}
+
+/* ═══════════════════════════════════════════════
+   EMAIL MODAL
+══════════════════════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;z-index:999;
+  background:rgba(5,6,8,.85);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  animation:fadeIn .2s ease;
+}
+.modal-overlay.hidden{display:none}
+
+.email-modal{
+  width:640px;max-width:96vw;max-height:90vh;
+  background:var(--surface);border:1px solid var(--border-hi);
+  border-radius:6px;display:flex;flex-direction:column;
+  box-shadow:0 24px 80px rgba(0,0,0,.6);
+  animation:modalIn .25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:none}}
+
+.modal-header{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0
+}
+.modal-title{font-family:var(--sans);font-size:14px;font-weight:700;letter-spacing:.04em;color:var(--text);
+  display:flex;align-items:center;gap:10px}
+.modal-title-icon{
+  width:28px;height:28px;background:#1a4fff22;border:1px solid #1a4fff44;
+  border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px
+}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--text-lo);font-size:18px;
+  line-height:1;padding:4px;transition:color .15s;border-radius:3px}
+.modal-close:hover{color:var(--text);background:var(--surface2)}
+
+.modal-body{flex:1;overflow-y:auto;padding:20px}
+.modal-body::-webkit-scrollbar{width:4px}
+.modal-body::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:2px}
+
+/* Recipient card */
+.recipient-card{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:4px;margin-bottom:16px
+}
+.recipient-avatar{
+  width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1a4fff55,var(--accent)33);
+  border:1px solid var(--border-hi);display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;color:var(--accent);flex-shrink:0
+}
+.recipient-info{flex:1;min-width:0}
+.recipient-name{font-size:13px;font-weight:600;color:var(--text)}
+.recipient-email{font-size:11px;color:var(--text-lo);margin-top:2px}
+.recipient-tier{
+  padding:2px 8px;font-size:10px;letter-spacing:.06em;font-weight:600;text-transform:uppercase;
+  background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.2);border-radius:2px
+}
+.recipient-tier.premium{background:rgba(10,170,255,.1);color:var(--accent2);border-color:rgba(10,170,255,.2)}
+.recipient-tier.vip{background:rgba(245,166,35,.1);color:var(--warn);border-color:rgba(245,166,35,.2)}
+
+/* Email fields */
+.field-group{margin-bottom:14px}
+.field-label{font-size:10px;color:var(--text-lo);letter-spacing:.1em;text-transform:uppercase;
+  font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.field-label .field-required{color:var(--danger);font-size:11px}
+.field-input,.field-textarea{
+  width:100%;background:var(--bg);border:1px solid var(--border-hi);
+  color:var(--text);padding:9px 12px;font-family:var(--mono);font-size:12px;
+  border-radius:3px;outline:none;transition:border-color .15s;
+}
+.field-input:focus,.field-textarea:focus{border-color:var(--accent)}
+.field-textarea{resize:vertical;min-height:220px;line-height:1.75}
+.field-hint{font-size:10px;color:var(--muted);margin-top:4px}
+
+/* AI generate button in modal */
+.btn-ai-generate{
+  background:#7c3aed22;color:#a78bfa;border:1px solid #7c3aed44;
+  padding:5px 12px;border-radius:3px;cursor:pointer;font-family:var(--mono);
+  font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:5px;transition:background .15s,border-color .15s
+}
+.btn-ai-generate:hover:not(:disabled){background:#7c3aed33;border-color:#a78bfa}
+.btn-ai-generate:disabled{opacity:.35;cursor:not-allowed}
+
+.modal-footer{
+  padding:14px 20px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+  background:var(--surface2)
+}
+.modal-footer-left{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-lo)}
+.modal-footer-right{display:flex;align-items:center;gap:8px}
+
+/* Send status */
+.send-status{
+  padding:10px 14px;border-radius:4px;font-size:11px;line-height:1.6;
+  display:flex;align-items:flex-start;gap:8px;margin-top:14px;
+  animation:slideIn .2s ease
+}
+.send-status.success{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);color:var(--accent)}
+.send-status.simulated{background:rgba(10,170,255,.08);border:1px solid rgba(10,170,255,.25);color:var(--accent2)}
+.send-status.failed{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.25);color:var(--danger)}
+.send-status-icon{font-size:14px;flex-shrink:0}
+.send-status-text{}
+
+/* Char counter */
+.char-count{font-size:10px;color:var(--muted);text-align:right;margin-top:3px}
+
+/* running indicator */
+.running-indicator{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px dashed var(--accent);
+  border-radius:3px;color:var(--accent);font-size:11px;margin-bottom:8px;animation:borderPulse 1.5s ease infinite}
+@keyframes borderPulse{0%,100%{border-color:rgba(0,229,160,.4)}50%{border-color:rgba(0,229,160,1)}}
+
+*{scrollbar-width:thin;scrollbar-color:var(--border-hi) transparent}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<header>
+  <div class="logo"><div class="logo-dot"></div>NEXUS</div>
+  <div class="header-meta">
+    <div class="stat-pill">PROCESSED <span id="hdr-processed">0</span></div>
+    <div class="stat-pill">ESCALATED <span id="hdr-escalated">0</span></div>
+    <div class="stat-pill">AVG CONF <span id="hdr-conf">—</span></div>
+    <div class="stat-pill">EMAILS <span id="hdr-emails">0</span></div>
+  </div>
+</header>
+
+<!-- Config bar -->
+<div class="config-bar">
+  <span class="config-label">ASI:1 KEY</span>
+  <input class="config-input" id="asi1-key" type="password" placeholder="sk-asi1-..."/>
+  <div class="config-sep"></div>
+  <span class="config-label">COMPOSIO KEY</span>
+  <input class="config-input" id="composio-key" type="password" placeholder="comp_..."/>
+  <div class="config-sep"></div>
+  <span style="font-size:10px;color:var(--muted)">Keys sent to local server only · leave blank for demo mode</span>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT: ticket list -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Tickets</span>
+      <span id="ticket-count" style="font-size:11px;color:var(--muted)">—</span>
+    </div>
+    <div style="padding:8px 12px;display:flex;gap:6px;border-bottom:1px solid var(--border);background:var(--surface)">
+      <button class="btn btn-outline" style="font-size:9px;padding:3px 8px" onclick="filterTickets('status','open')">Open</button>
+      <button class="btn btn-outline" style="font-size:9px;padding:3px 8px" onclick="filterTickets('priority','medium')">Medium</button>
+      <button class="btn btn-outline" style="font-size:9px;padding:3px 8px" onclick="filterTickets('all','all')">All</button>
+    </div>
+    <div class="panel-body" id="ticket-list">
+      <div style="color:var(--muted);font-size:11px;padding:20px;text-align:center">Loading…</div>
+    </div>
+  </div>
+
+  <!-- CENTER: detail + pipeline -->
+  <div class="panel" style="border-right:1px solid var(--border)">
+    <div class="panel-header">
+      <span class="panel-title" id="center-title">Ticket Detail</span>
+      <div style="display:flex;gap:7px;align-items:center">
+        <span id="processing-spinner" style="display:none"><div class="spinner"></div></span>
+        <button class="btn btn-outline" onclick="loadTickets()">↺ Refresh</button>
+      </div>
+    </div>
+    <div class="panel-body" id="detail-panel">
+      <div class="detail-empty">
+        <div class="icon">⬡</div>
+        <p>Select a ticket to begin</p>
+      </div>
+    </div>
+    <div class="action-bar" id="action-bar" style="display:none">
+      <button class="btn btn-primary" id="btn-process" onclick="processSelectedTicket()">▶ Run Agent</button>
+      <button class="btn btn-email" id="btn-compose-email" onclick="openEmailModal()" disabled>✉ Compose Email</button>
+      <span id="process-status" style="font-size:11px;color:var(--muted)"></span>
+    </div>
+  </div>
+
+  <!-- RIGHT: agent output -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Agent Output</span>
+      <button class="btn btn-outline" onclick="clearOutput()">Clear</button>
+    </div>
+    <div class="panel-body" id="output-panel">
+      <div style="color:var(--muted);font-size:11px;padding:20px;text-align:center;line-height:2">
+        Process a ticket to see<br/>agent reasoning & logs
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+
+<!-- ═══════════════════════════════════════════════
+     EMAIL COMPOSER MODAL
+════════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="email-modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="email-modal" id="email-modal">
+
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="modal-title-icon">✉</div>
+        Customer Email Composer
+      </div>
+      <button class="modal-close" onclick="closeEmailModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Recipient -->
+      <div class="recipient-card" id="modal-recipient">
+        <div class="recipient-avatar" id="modal-avatar">?</div>
+        <div class="recipient-info">
+          <div class="recipient-name" id="modal-cust-name">—</div>
+          <div class="recipient-email" id="modal-cust-email">—</div>
+        </div>
+        <span class="recipient-tier" id="modal-cust-tier">—</span>
+      </div>
+
+      <!-- AI generate row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-size:11px;color:var(--text-lo)">
+          Ticket: <span id="modal-ticket-id" style="color:var(--text)">—</span>
+        </span>
+        <button class="btn-ai-generate" id="btn-ai-gen" onclick="generateEmailDraft()">
+          <span id="ai-gen-spinner" style="display:none"><div class="spinner" style="width:10px;height:10px;border-width:1.5px"></div></span>
+          ✦ AI Draft
+        </button>
+      </div>
+
+      <!-- Subject -->
+      <div class="field-group">
+        <div class="field-label">Subject <span class="field-required">*</span></div>
+        <input class="field-input" id="email-subject" type="text" placeholder="Re: Your recent order issue…"/>
+      </div>
+
+      <!-- Body -->
+      <div class="field-group">
+        <div class="field-label" style="justify-content:space-between">
+          <span>Message Body <span class="field-required">*</span></span>
+          <span style="font-size:10px;color:var(--muted);letter-spacing:normal;text-transform:none;font-weight:400">Editable — make any changes before sending</span>
+        </div>
+        <textarea class="field-textarea" id="email-body" placeholder="Dear [Customer Name],&#10;&#10;Thank you for contacting ShopWave…"
+          oninput="updateCharCount()"></textarea>
+        <div class="char-count" id="char-count">0 characters</div>
+      </div>
+
+      <!-- Send status area -->
+      <div id="send-status-area"></div>
+
+    </div><!-- /modal-body -->
+
+    <div class="modal-footer">
+      <div class="modal-footer-left">
+        <span id="modal-composio-status" style="font-size:10px;color:var(--muted)">
+          Composio: checking…
+        </span>
+      </div>
+      <div class="modal-footer-right">
+        <button class="btn btn-outline btn-danger-outline" onclick="closeEmailModal()">Cancel</button>
+        <button class="btn btn-send" id="btn-send-email" onclick="sendEmail()">
+          <span id="send-spinner" style="display:none"><div class="spinner" style="width:11px;height:11px;border-width:1.5px"></div></span>
+          ↑ Send Email
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /email-modal -->
+</div><!-- /modal-overlay -->
+
+
+<script>
+const API = 'http://localhost:8000';
+let selectedTicket = null;
+let processing = false;
+let lastResult = null;
+let allTickets = [];
+
+// ── Filtering ────────────────────────────────────────────────────
+function filterTickets(type, value){
+  const filtered = allTickets.filter(t => {
+    if(type==='all') return true;
+    if(type==='status') return t.status === value;
+    if(type==='priority') return t.priority === value;
+    return true;
+  });
+  renderTicketList(filtered);
+}
+
+function renderTicketList(tickets){
+  document.getElementById('ticket-count').textContent = tickets.length;
+  document.getElementById('ticket-list').innerHTML = tickets.map(ticketCard).join('');
+}
+
+// ── file:// guard — must be served via python main.py ────────────
+if (location.protocol === 'file:') {
+  document.body.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                min-height:100vh;background:#0a0b0d;color:#d4dce8;
+                font-family:'JetBrains Mono',monospace;gap:20px;padding:40px;text-align:center;">
+      <div style="font-size:40px">&#9888;</div>
+      <div style="font-size:18px;color:#ff4757;font-weight:700;letter-spacing:.08em;">
+        CANNOT OPEN AS A LOCAL FILE
+      </div>
+      <div style="font-size:13px;color:#6b7a8f;line-height:2;max-width:500px;">
+        This UI makes API calls to <code style="color:#00e5a0">localhost:8000</code> and cannot
+        run from a <code style="color:#f5a623">file://</code> path — browsers block this for security.
+      </div>
+      <div style="background:#111318;border:1px solid #353c4a;border-radius:6px;
+                  padding:20px 32px;font-size:13px;line-height:2.4;text-align:left;">
+        <div style="color:#6b7a8f;margin-bottom:4px;">Step 1 — open your terminal and run:</div>
+        <div style="color:#00e5a0;">cd customer-care/</div>
+        <div style="color:#00e5a0;">pip install -r requirements.txt</div>
+        <div style="color:#00e5a0;">python main.py</div>
+        <div style="margin-top:12px;color:#6b7a8f;">Step 2 — open in browser:</div>
+        <a href="http://localhost:8000" style="color:#0af;text-decoration:none;font-size:15px;">
+          http://localhost:8000
+        </a>
+      </div>
+    </div>`;
+  throw new Error('file:// blocked — open http://localhost:8000 instead.');
+}
+
+// ── Utils ─────────────────────────────────────────────────────────
+function escHtml(str=''){
+  const d=document.createElement('div');d.textContent=str;return d.innerHTML;
+}
+function ts(iso){
+  if(!iso)return'';
+  return new Date(iso).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function confClass(c){return c>=.80?'high':c>=.60?'medium':'low'}
+async function apiFetch(path,opts={}){
+  try{
+    const r=await fetch(API+path,opts);
+    if(!r.ok)throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+    return await r.json();
+  }catch(e){console.error('API:',e);return null}
+}
+
+// ── Tickets ───────────────────────────────────────────────────────
+async function loadTickets(){
+  const data=await apiFetch('/api/tickets');
+  if(!data){
+    document.getElementById('ticket-list').innerHTML=
+      `<div style="color:var(--danger);font-size:11px;padding:20px;text-align:center">
+        ⚠ Cannot reach ${API}<br><br>
+        <span style="color:var(--text-lo)">Run: python main.py</span>
+      </div>`;
+    return;
+  }
+  allTickets = data.tickets||[];
+  renderTicketList(allTickets);
+  loadStats();
+}
+
+function ticketCard(t){
+  const sel=selectedTicket?.ticket_id===t.ticket_id?'selected':'';
+  return `
+  <div class="ticket-card ${sel} priority-${t.priority||'medium'}" onclick="selectTicket('${t.ticket_id}')">
+    <div class="ticket-id">${t.ticket_id} · ${ts(t.created_at)}</div>
+    <div class="ticket-subject">${escHtml(t.subject)}</div>
+    <div class="ticket-meta">
+      <span class="badge badge-${t.status||'open'}">${(t.status||'open').toUpperCase()}</span>
+      <span class="badge badge-${t.priority||'medium'}">${(t.priority||'medium').toUpperCase()}</span>
+      <span style="font-size:10px;color:var(--muted)">${t.channel}</span>
+    </div>
+  </div>`;
+}
+
+async function selectTicket(ticketId){
+  const data=await apiFetch(`/api/tickets/${ticketId}`);
+  if(!data)return;
+  selectedTicket=data;
+  lastResult=null;
+  document.querySelectorAll('.ticket-card').forEach(c=>{
+    c.classList.toggle('selected',c.getAttribute('onclick')?.includes(ticketId));
+  });
+  renderTicketDetail(data);
+  document.getElementById('action-bar').style.display='flex';
+  document.getElementById('btn-process').disabled=false;
+  document.getElementById('btn-compose-email').disabled=false;
+  document.getElementById('process-status').textContent='';
+  document.getElementById('btn-process').textContent='▶ Run Agent';
+}
+
+async function renderTicketDetail(t){
+  document.getElementById('center-title').textContent=t.ticket_id;
+  
+  // Show basic info immediately
+  let html = `
+    <div class="detail-section">
+      <div class="section-label">Ticket Info</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">${escHtml(t.subject || t.body || 'No Subject')}</div>
+      <div class="kv-grid">
+        <div class="kv"><div class="kv-label">CUSTOMER</div><div class="kv-value">${t.customer_id || t.customer_email || 'N/A'}</div></div>
+        <div class="kv"><div class="kv-label">ORDER</div><div class="kv-value">${t.order_id || 'N/A'}</div></div>
+        <div class="kv"><div class="kv-label">PRIORITY</div><div class="kv-value">${(t.priority || 'medium').toUpperCase()}</div></div>
+        <div class="kv"><div class="kv-label">CHANNEL</div><div class="kv-value">${t.channel || 'unknown'}</div></div>
+        <div class="kv"><div class="kv-label">STATUS</div><div class="kv-value">${(t.status || 'open').toUpperCase()}</div></div>
+        <div class="kv"><div class="kv-label">CREATED</div><div class="kv-value">${ts(t.created_at)}</div></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="section-label">Customer Description</div>
+      <div class="ticket-desc">${escHtml(t.description || t.body || 'No description provided.')}</div>
+    </div>`;
+
+  document.getElementById('detail-panel').innerHTML = html + `<div style="text-align:center;padding:20px"><div class="spinner"></div> Loading context…</div>`;
+
+  // Fetch full details
+  const [order, customer] = await Promise.all([
+    apiFetch(`/api/orders/${t.order_id}`),
+    apiFetch(`/api/customers/${t.customer_id}`)
+  ]);
+
+  if(customer) {
+    html += `
+      <div class="detail-section">
+        <div class="section-label">Customer Context</div>
+        <div class="kv-grid">
+          <div class="kv"><div class="kv-label">NAME</div><div class="kv-value">${customer.name || 'N/A'}</div></div>
+          <div class="kv"><div class="kv-label">TIER</div><div class="kv-value">${(customer.tier || 'standard').toUpperCase()}</div></div>
+          <div class="kv"><div class="kv-label">EMAIL</div><div class="kv-value">${customer.email || 'N/A'}</div></div>
+          <div class="kv"><div class="kv-label">TOTAL ORDERS</div><div class="kv-value">${customer.total_orders || 0}</div></div>
+        </div>
+      </div>`;
+  }
+
+  if(order) {
+    const itemsHtml = order.items.map(i => `<div style="font-size:11px;padding:4px 0;border-bottom:1px solid var(--border)">${i.product_id} x${i.quantity} @ ₹${i.unit_price}</div>`).join('');
+    html += `
+      <div class="detail-section">
+        <div class="section-label">Order Details</div>
+        <div class="kv-grid">
+          <div class="kv"><div class="kv-label">STATUS</div><div class="kv-value">${(order.status || 'unknown').toUpperCase()}</div></div>
+          <div class="kv"><div class="kv-label">TOTAL</div><div class="kv-value">₹${order.total_amount || 0}</div></div>
+        </div>
+        <div style="margin-top:10px">${itemsHtml}</div>
+      </div>`;
+  }
+
+  html += `
+    <div class="detail-section" id="pipeline-section" style="display:none">
+      <div class="section-label">Pipeline Trace</div>
+      <div id="pipeline-steps"></div>
+    </div>`;
+
+  document.getElementById('detail-panel').innerHTML = html;
+}
+
+// ── Process ticket ────────────────────────────────────────────────
+async function processSelectedTicket(){
+  if(!selectedTicket||processing)return;
+  processing=true;
+  const btn=document.getElementById('btn-process');
+  const spinner=document.getElementById('processing-spinner');
+  const status=document.getElementById('process-status');
+  btn.disabled=true;spinner.style.display='block';
+  status.textContent='Running pipeline…';
+  clearOutput();
+  appendOutput(`<div class="running-indicator"><div class="spinner"></div>Processing ${selectedTicket.ticket_id} — multi-step LLM pipeline…</div>`);
+  const pipelineSection=document.getElementById('pipeline-section');
+  if(pipelineSection)pipelineSection.style.display='block';
+
+  const result=await apiFetch(`/api/process/${selectedTicket.ticket_id}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      ticket_id:selectedTicket.ticket_id,
+      asi1_api_key:document.getElementById('asi1-key').value||undefined,
+      composio_api_key:document.getElementById('composio-key').value||undefined,
+    }),
+  });
+
+  spinner.style.display='none';processing=false;
+  if(!result){
+    btn.disabled=false;status.textContent='⚠ Error';clearOutput();
+    appendOutput(`<div style="color:var(--danger);padding:20px;font-size:12px">⚠ Pipeline failed. Check server logs.</div>`);
+    return;
+  }
+  lastResult=result;
+  await loadTickets();
+  status.textContent=result.final_status==='resolved'?'✓ Resolved':'⚠ Escalated';
+  btn.disabled=false;btn.textContent='↺ Re-run';
+  renderResult(result);
+  // Pre-fill email modal if email was generated
+  if(result.email_body){
+    prefillEmailModal(result);
+  }
+}
+
+// ── Render pipeline trace ─────────────────────────────────────────
+function renderPipelineTrace(trace){
+  const container=document.getElementById('pipeline-steps');
+  if(!container)return;
+  const ICONS={ticket_loaded:'📋',classification:'🏷',get_order:'📦',get_customer:'👤',
+    get_products:'🛍',knowledge_base_search:'📚',reasoning:'🧠',confidence_validation:'✅',
+    escalation:'⚠️',email_generated:'✉️',email_sent:'📤'};
+  container.innerHTML=(trace||[]).map((step,i)=>{
+    const icon=ICONS[step.step]||'◆';
+    const dataStr=step.step==='reasoning'
+      ?`${(step.data.reasoning_steps||[]).length} reasoning steps · confidence ${(step.data.confidence_score||0).toFixed(2)}`
+      :Object.entries(step.data||{}).slice(0,3).map(([k,v])=>{
+          const val=Array.isArray(v)?v.join(', '):String(v);
+          return `${k}: ${val.length>40?val.slice(0,40)+'…':val}`;
+        }).join(' · ');
+    return `<div class="pipeline-step" style="animation-delay:${i*.05}s">
+      <div class="step-icon">${icon}</div>
+      <div>
+        <div class="step-name">${step.step.replace(/_/g,' ').toUpperCase()}</div>
+        <div class="step-detail">${escHtml(dataStr)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Render result (right panel) ───────────────────────────────────
+function renderResult(result){
+  clearOutput();
+  renderPipelineTrace(result.pipeline_trace);
+  const conf=result.confidence_score||0;
+  const confPct=Math.round(conf*100);
+  const cc=confClass(conf);
+  const isResolved=result.final_status==='resolved';
+  let html='';
+
+  html+=`<div class="confidence-block">
+    <div class="confidence-label">
+      <span class="confidence-title">Confidence Score</span>
+      <span class="confidence-pct ${cc}">${confPct}%</span>
+    </div>
+    <div class="meter-bar"><div class="meter-fill ${cc}" style="width:0%" id="meter-fill"></div></div>
+    <div style="margin-top:7px;font-size:10px;color:var(--text-lo)">
+      Threshold: ${Math.round((result.confidence_threshold||.6)*100)}% · Action: <span style="color:var(--text)">${result.recommended_action||'—'}</span>
+    </div>
+  </div>`;
+
+  html+=`<div class="decision-banner ${isResolved?'resolved':'escalated'}">
+    <div class="banner-icon">${isResolved?'✓':'⚠'}</div>
+    <div>
+      <div class="banner-title">${isResolved?'AUTO-RESOLVED':'ESCALATED TO HUMAN'}</div>
+      <div class="banner-desc">${escHtml(result.escalation_reason||result.human_summary||'')}</div>
+    </div>
+  </div>`;
+
+  if(result.human_summary)
+    html+=`<div class="summary-box"><div style="font-size:10px;color:var(--accent);letter-spacing:.1em;margin-bottom:5px">SUMMARY FOR HUMAN</div>${escHtml(result.human_summary)}</div>`;
+
+  const cls=result.classification||{};
+  html+=`<div class="detail-section">
+    <div class="section-label">Classification</div>
+    <div class="kv-grid">
+      <div class="kv"><div class="kv-label">CATEGORY</div><div class="kv-value">${cls.category||'—'}</div></div>
+      <div class="kv"><div class="kv-label">SUB</div><div class="kv-value">${cls.sub_category||'—'}</div></div>
+      <div class="kv"><div class="kv-label">SENTIMENT</div><div class="kv-value">${cls.sentiment||'—'}</div></div>
+      <div class="kv"><div class="kv-label">URGENCY</div><div class="kv-value">${cls.urgency||'—'}</div></div>
+    </div>
+  </div>`;
+
+  const trace=result.pipeline_trace||[];
+  const rsn=trace.find(s=>s.step==='reasoning');
+  if(rsn?.data?.reasoning_steps?.length)
+    html+=`<div class="detail-section">
+      <div class="section-label">Reasoning Chain</div>
+      ${rsn.data.reasoning_steps.map((s,i)=>`<div class="reasoning-step"><div class="reasoning-num">${i+1}.</div><div class="reasoning-text">${escHtml(s)}</div></div>`).join('')}
+    </div>`;
+
+  if(result.policies_applied?.length)
+    html+=`<div class="detail-section">
+      <div class="section-label">Policies Applied</div>
+      <div class="policy-tags">${result.policies_applied.map(p=>`<span class="policy-tag">${p}</span>`).join('')}</div>
+      ${result.rule_violations?.length?`<div style="margin-top:7px;font-size:10px;color:var(--danger)">⚠ ${result.rule_violations.join(' · ')}</div>`:''}
+    </div>`;
+
+  // Email preview block (read-only, with Edit & Send button)
+  if(result.email_body){
+    const emailSentLabel=result.email_sent
+      ?`<span style="color:var(--accent)">✓ AUTO-SENT</span>`
+      :`<span style="color:var(--muted)">PREVIEW</span>`;
+    html+=`<div class="detail-section">
+      <div class="section-label">Customer Email · ${emailSentLabel}</div>
+      <div style="padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:4px">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:8px">📧 ${escHtml(result.email_subject||'')}</div>
+        <div style="font-size:11px;color:var(--text-lo);line-height:1.8;white-space:pre-wrap;max-height:180px;overflow-y:auto">${escHtml(result.email_body)}</div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:7px">
+        <button class="btn btn-email" style="font-size:10px;padding:6px 12px" onclick="openEmailModal()">✉ Edit &amp; Send</button>
+        ${!result.email_sent?`<span style="font-size:10px;color:var(--muted);align-self:center">Email not sent yet — click to send</span>`:''}
+      </div>
+    </div>`;
+  }
+
+  const logs=result.logs||[];
+  if(logs.length)
+    html+=`<div class="detail-section">
+      <div class="section-label">Event Log (${logs.length})</div>
+      ${logs.map(renderLogEntry).join('')}
+    </div>`;
+
+  html+=`<div style="font-size:10px;color:var(--muted);text-align:center;padding:10px 0">
+    Completed in ${result.processing_time_seconds}s · ${result.pipeline_trace?.length||0} steps
+  </div>`;
+
+  appendOutput(html);
+  setTimeout(()=>{
+    const fill=document.getElementById('meter-fill');
+    if(fill)fill.style.width=confPct+'%';
+  },50);
+  loadStats();
+}
+
+function renderLogEntry(l){
+  const msg=l.step?`${l.step} — ${JSON.stringify(l.detail||l.reasoning||'').slice(0,80)}`
+    :l.error||l.query||l.reason||l.summary||'';
+  return `<div class="log-entry ${l.event}">
+    <span class="log-time">${ts(l.timestamp)}</span>
+    <span class="log-event">${l.event}</span>
+    <span class="log-msg">${escHtml(msg)}</span>
+  </div>`;
+}
+
+function clearOutput(){document.getElementById('output-panel').innerHTML=''}
+function appendOutput(html){document.getElementById('output-panel').innerHTML+=html}
+
+// ── Stats ─────────────────────────────────────────────────────────
+async function loadStats(){
+  const data=await apiFetch('/api/stats');
+  if(!data)return;
+  document.getElementById('hdr-processed').textContent=data.total_processed||0;
+  document.getElementById('hdr-escalated').textContent=data.escalated||0;
+  document.getElementById('hdr-conf').textContent=data.avg_confidence?(data.avg_confidence*100).toFixed(0)+'%':'—';
+  document.getElementById('hdr-emails').textContent=data.emails_sent||0;
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// EMAIL MODAL
+// ══════════════════════════════════════════════════════════════════
+
+function openEmailModal(){
+  if(!selectedTicket)return;
+  document.getElementById('email-modal-overlay').classList.remove('hidden');
+  document.getElementById('send-status-area').innerHTML='';
+  // Populate ticket ref
+  document.getElementById('modal-ticket-id').textContent=selectedTicket.ticket_id;
+  // Pre-fill from last agent result if available, else blank
+  if(lastResult&&lastResult.email_body){
+    prefillEmailModal(lastResult);
+  } else {
+    populateRecipientFromTicket(selectedTicket);
+  }
+  checkComposioStatus();
+}
+
+function closeEmailModal(){
+  document.getElementById('email-modal-overlay').classList.add('hidden');
+}
+
+function handleOverlayClick(e){
+  if(e.target===document.getElementById('email-modal-overlay')) closeEmailModal();
+}
+
+function prefillEmailModal(result){
+  document.getElementById('email-subject').value=result.email_subject||'';
+  document.getElementById('email-body').value=result.email_body||'';
+  updateCharCount();
+  // Try to fill recipient from result
+  if(result.customer){
+    setRecipient(result.customer.name||'Customer', result.customer.email||'', result.customer.tier||'standard');
+  }
+  document.getElementById('modal-ticket-id').textContent=result.ticket_id;
+}
+
+async function populateRecipientFromTicket(ticket){
+  const customer=await apiFetch(`/api/customers/${ticket.customer_id}`);
+  if(customer){
+    setRecipient(customer.name, customer.email, customer.tier);
+  } else {
+    setRecipient('—','—','standard');
+  }
+}
+
+function setRecipient(name, email, tier){
+  document.getElementById('modal-avatar').textContent=(name||'?')[0].toUpperCase();
+  document.getElementById('modal-cust-name').textContent=name||'—';
+  document.getElementById('modal-cust-email').textContent=email||'—';
+  const tierEl=document.getElementById('modal-cust-tier');
+  tierEl.textContent=(tier||'standard').toUpperCase();
+  tierEl.className='recipient-tier '+(tier||'standard').toLowerCase();
+}
+
+function updateCharCount(){
+  const body=document.getElementById('email-body').value||'';
+  document.getElementById('char-count').textContent=`${body.length} characters · ${body.split('\n').length} lines`;
+}
+
+function checkComposioStatus(){
+  const key=document.getElementById('composio-key').value;
+  const statusEl=document.getElementById('modal-composio-status');
+  if(key&&key.trim()&&key!=='your_composio_api_key_here'){
+    statusEl.innerHTML='✓ Composio key set — email will be <span style="color:var(--accent)">delivered via Gmail</span>';
+  } else {
+    statusEl.innerHTML='ℹ No Composio key — email will be <span style="color:var(--accent2)">simulated</span>';
+  }
+}
+
+// ── AI Draft generation ──────────────────────────────────────────
+async function generateEmailDraft(){
+  if(!selectedTicket)return;
+  const btn=document.getElementById('btn-ai-gen');
+  const sp=document.getElementById('ai-gen-spinner');
+  btn.disabled=true;sp.style.display='inline-flex';
+  document.getElementById('send-status-area').innerHTML='';
+
+  const result=await apiFetch('/api/generate-email',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      ticket_id:selectedTicket.ticket_id,
+      asi1_api_key:document.getElementById('asi1-key').value||undefined,
+    }),
+  });
+
+  btn.disabled=false;sp.style.display='none';
+
+  if(!result){
+    showSendStatus('failed','⚠ Failed to generate email draft. Check server.');
+    return;
+  }
+
+  document.getElementById('email-subject').value=result.subject||'';
+  document.getElementById('email-body').value=result.body||'';
+  updateCharCount();
+  setRecipient(result.customer_name, result.to_email, result.customer_tier);
+  document.getElementById('modal-ticket-id').textContent=result.ticket_id;
+  showSendStatus('simulated','✦ AI draft generated — review and edit before sending.');
+}
+
+// ── Send email ───────────────────────────────────────────────────
+async function sendEmail(){
+  const subject=document.getElementById('email-subject').value.trim();
+  const body=document.getElementById('email-body').value.trim();
+  const toEmail=document.getElementById('modal-cust-email').textContent.trim();
+  const customerName=document.getElementById('modal-cust-name').textContent.trim();
+  const ticketId=document.getElementById('modal-ticket-id').textContent.trim();
+
+  if(!subject){showSendStatus('failed','⚠ Subject is required.');return}
+  if(!body){showSendStatus('failed','⚠ Message body is required.');return}
+  if(!toEmail||toEmail==='—'){showSendStatus('failed','⚠ No recipient email found.');return}
+
+  const btn=document.getElementById('btn-send-email');
+  const sp=document.getElementById('send-spinner');
+  btn.disabled=true;sp.style.display='inline-flex';
+  showSendStatus('simulated','Sending…');
+
+  const result=await apiFetch('/api/send-email',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      ticket_id:ticketId,
+      to_email:toEmail,
+      customer_name:customerName,
+      subject:subject,
+      body:body,
+      composio_api_key:document.getElementById('composio-key').value||undefined,
+    }),
+  });
+
+  btn.disabled=false;sp.style.display='none';
+
+  if(!result||!result.success){
+    showSendStatus('failed',`⚠ Send failed: ${result?.error||'Unknown error'}`);
+    return;
+  }
+
+  const isSim=result.status==='simulated'||result.status==='sdk_not_installed';
+  if(isSim){
+    showSendStatus('simulated',
+      `✦ Email simulated (no Composio key set).\n`+
+      `To: ${toEmail}\nSubject: ${subject}\n\n`+
+      `Set COMPOSIO_API_KEY in the config bar to send real emails via Gmail.`);
+  } else {
+    showSendStatus('success',
+      `✓ Email sent successfully via Composio Gmail!\n`+
+      `To: ${toEmail}\nSubject: ${subject}\n`+
+      (result.message_id?`Message ID: ${result.message_id}`:''));
+  }
+
+  // Update header stats
+  loadStats();
+}
+
+function showSendStatus(type, msg){
+  const icons={success:'✓',simulated:'ℹ',failed:'⚠'};
+  document.getElementById('send-status-area').innerHTML=`
+    <div class="send-status ${type}">
+      <div class="send-status-icon">${icons[type]||'•'}</div>
+      <div class="send-status-text" style="white-space:pre-wrap">${escHtml(msg)}</div>
+    </div>`;
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+loadTickets();
+setInterval(loadStats,15000);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEmailModal()});
+</script>
+</body>
+</html>
